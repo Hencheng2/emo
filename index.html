@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Editor with Custom Emoji</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .app-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .controls {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .preview-area {
+            flex: 2;
+            min-width: 500px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            min-height: 500px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .control-group {
+            margin-bottom: 25px;
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 8px;
+        }
+        
+        .upload-area {
+            border: 3px dashed rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+        
+        .upload-area:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .upload-icon {
+            font-size: 50px;
+            margin-bottom: 15px;
+        }
+        
+        .btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-secondary {
+            background: #2196F3;
+        }
+        
+        .btn-secondary:hover {
+            background: #0b7dda;
+        }
+        
+        .btn-danger {
+            background: #f44336;
+        }
+        
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+        
+        .slider-container {
+            margin: 15px 0;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4CAF50;
+            cursor: pointer;
+        }
+        
+        .emoji-preview {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+            height: 150px;
+        }
+        
+        .custom-emoji {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #00D26A;
+            border-radius: 50%;
+            color: white;
+            font-weight: bold;
+            user-select: none;
+            cursor: move;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s;
+        }
+        
+        .custom-emoji:hover {
+            transform: scale(1.05);
+        }
+        
+        #imagePreview {
+            max-width: 100%;
+            max-height: 500px;
+            display: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .placeholder-text {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.2rem;
+        }
+        
+        .instructions {
+            margin-top: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .instructions h3 {
+            margin-bottom: 10px;
+        }
+        
+        .instructions ol {
+            margin-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 900px) {
+            .app-container {
+                flex-direction: column;
+            }
+            
+            .controls, .preview-area {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Photo Editor with Custom Emoji</h1>
+            <p class="subtitle">Upload a photo and add customizable round green checkmarks</p>
+        </header>
+        
+        <div class="app-container">
+            <div class="controls">
+                <div class="control-group">
+                    <h2>Upload Photo</h2>
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">📁</div>
+                        <p>Click or drag a photo here to upload</p>
+                        <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h2>Customize Emoji</h2>
+                    
+                    <div class="emoji-preview">
+                        <div class="custom-emoji" id="emojiPreview" style="width: 100px; height: 100px; font-size: 50px;">
+                            ✔
+                        </div>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="sizeSlider">Emoji Size: <span id="sizeValue">100</span>px</label>
+                        <input type="range" id="sizeSlider" min="30" max="200" value="100">
+                    </div>
+                    
+                    <button class="btn" id="addEmojiBtn">
+                        <span>➕</span> Add Emoji to Photo
+                    </button>
+                </div>
+                
+                <div class="control-group">
+                    <h2>Actions</h2>
+                    <button class="btn btn-secondary" id="downloadBtn">
+                        <span>💾</span> Download Final Image
+                    </button>
+                    <button class="btn btn-danger" id="resetBtn">
+                        <span>🗑️</span> Reset All
+                    </button>
+                </div>
+                
+                <div class="instructions">
+                    <h3>How to Use:</h3>
+                    <ol>
+                        <li>Upload a photo by clicking the upload area</li>
+                        <li>Adjust the emoji size using the slider</li>
+                        <li>Click "Add Emoji to Photo" to place an emoji</li>
+                        <li>Drag the emoji to your desired location</li>
+                        <li>Add multiple emojis if needed</li>
+                        <li>Download your final image when done</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <div class="preview-area" id="previewArea">
+                <img id="imagePreview" alt="Preview">
+                <p class="placeholder-text" id="placeholderText">Your photo will appear here</p>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Created with HTML, CSS, and JavaScript | Photo Editor with Custom Emoji</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get DOM elements
+            const fileInput = document.getElementById('fileInput');
+            const uploadArea = document.getElementById('uploadArea');
+            const imagePreview = document.getElementById('imagePreview');
+            const previewArea = document.getElementById('previewArea');
+            const placeholderText = document.getElementById('placeholderText');
+            const sizeSlider = document.getElementById('sizeSlider');
+            const sizeValue = document.getElementById('sizeValue');
+            const emojiPreview = document.getElementById('emojiPreview');
+            const addEmojiBtn = document.getElementById('addEmojiBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            
+            let currentSize = 100;
+            let emojis = [];
+            let currentImage = null;
+            
+            // Upload area click event
+            uploadArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            // File input change event
+            fileInput.addEventListener('change', function(e) {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        imagePreview.src = e.target.result;
+                        imagePreview.style.display = 'block';
+                        placeholderText.style.display = 'none';
+                        
+                        // Store the current image for download
+                        currentImage = new Image();
+                        currentImage.src = e.target.result;
+                    };
+                    
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+            
+            // Drag and drop functionality
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadArea.style.background = 'rgba(255, 255, 255, 0.2)';
+                uploadArea.style.borderColor = 'rgba(255, 255, 255, 0.8)';
+            });
+            
+            uploadArea.addEventListener('dragleave', function() {
+                uploadArea.style.background = '';
+                uploadArea.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+            });
+            
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.style.background = '';
+                uploadArea.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+                
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    fileInput.files = e.dataTransfer.files;
+                    
+                    const event = new Event('change');
+                    fileInput.dispatchEvent(event);
+                }
+            });
+            
+            // Size slider event
+            sizeSlider.addEventListener('input', function() {
+                currentSize = this.value;
+                sizeValue.textContent = currentSize;
+                
+                // Update preview emoji size
+                emojiPreview.style.width = `${currentSize}px`;
+                emojiPreview.style.height = `${currentSize}px`;
+                emojiPreview.style.fontSize = `${currentSize * 0.5}px`;
+            });
+            
+            // Add emoji button event
+            addEmojiBtn.addEventListener('click', function() {
+                if (!imagePreview.style.display || imagePreview.style.display === 'none') {
+                    alert('Please upload an image first!');
+                    return;
+                }
+                
+                const emoji = document.createElement('div');
+                emoji.className = 'custom-emoji';
+                emoji.innerHTML = '✔';
+                emoji.style.width = `${currentSize}px`;
+                emoji.style.height = `${currentSize}px`;
+                emoji.style.fontSize = `${currentSize * 0.5}px`;
+                emoji.style.position = 'absolute';
+                
+                // Center the emoji on the image
+                const imgRect = imagePreview.getBoundingClientRect();
+                const containerRect = previewArea.getBoundingClientRect();
+                
+                const left = (imgRect.width / 2) - (currentSize / 2);
+                const top = (imgRect.height / 2) - (currentSize / 2);
+                
+                emoji.style.left = `${left}px`;
+                emoji.style.top = `${top}px`;
+                
+                // Make the emoji draggable
+                makeDraggable(emoji);
+                
+                previewArea.appendChild(emoji);
+                emojis.push(emoji);
+            });
+            
+            // Make an element draggable
+            function makeDraggable(element) {
+                let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+                
+                element.onmousedown = dragMouseDown;
+                
+                function dragMouseDown(e) {
+                    e.preventDefault();
+                    // Get the initial mouse cursor position
+                    pos3 = e.clientX;
+                    pos4 = e.clientY;
+                    
+                    document.onmouseup = closeDragElement;
+                    document.onmousemove = elementDrag;
+                }
+                
+                function elementDrag(e) {
+                    e.preventDefault();
+                    // Calculate the new cursor position
+                    pos1 = pos3 - e.clientX;
+                    pos2 = pos4 - e.clientY;
+                    pos3 = e.clientX;
+                    pos4 = e.clientY;
+                    
+                    // Set the element's new position
+                    const newTop = element.offsetTop - pos2;
+                    const newLeft = element.offsetLeft - pos1;
+                    
+                    // Constrain to the preview area
+                    const containerRect = previewArea.getBoundingClientRect();
+                    const elementRect = element.getBoundingClientRect();
+                    
+                    if (newTop >= 0 && newTop <= containerRect.height - elementRect.height) {
+                        element.style.top = newTop + "px";
+                    }
+                    
+                    if (newLeft >= 0 && newLeft <= containerRect.width - elementRect.width) {
+                        element.style.left = newLeft + "px";
+                    }
+                }
+                
+                function closeDragElement() {
+                    // Stop moving when mouse button is released
+                    document.onmouseup = null;
+                    document.onmousemove = null;
+                }
+            }
+            
+            // Download button event
+            downloadBtn.addEventListener('click', function() {
+                if (!imagePreview.style.display || imagePreview.style.display === 'none') {
+                    alert('Please upload an image first!');
+                    return;
+                }
+                
+                // Create a canvas to draw the final image
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Set canvas dimensions to match the image
+                canvas.width = imagePreview.naturalWidth;
+                canvas.height = imagePreview.naturalHeight;
+                
+                // Draw the base image
+                ctx.drawImage(imagePreview, 0, 0, canvas.width, canvas.height);
+                
+                // Calculate scale factors
+                const scaleX = canvas.width / imagePreview.offsetWidth;
+                const scaleY = canvas.height / imagePreview.offsetHeight;
+                
+                // Draw each emoji
+                emojis.forEach(emoji => {
+                    const emojiRect = emoji.getBoundingClientRect();
+                    const containerRect = previewArea.getBoundingClientRect();
+                    
+                    // Calculate position relative to the image
+                    const x = (emojiRect.left - containerRect.left) * scaleX;
+                    const y = (emojiRect.top - containerRect.top) * scaleY;
+                    const size = emoji.offsetWidth * scaleX;
+                    
+                    // Draw the circle
+                    ctx.fillStyle = '#00D26A';
+                    ctx.beginPath();
+                    ctx.arc(x + size/2, y + size/2, size/2, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Draw the checkmark
+                    ctx.fillStyle = 'white';
+                    ctx.font = `bold ${size * 0.5}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('✔', x + size/2, y + size/2);
+                });
+                
+                // Create download link
+                const link = document.createElement('a');
+                link.download = 'edited-photo.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+            
+            // Reset button event
+            resetBtn.addEventListener('click', function() {
+                // Remove all emojis
+                emojis.forEach(emoji => {
+                    previewArea.removeChild(emoji);
+                });
+                
+                emojis = [];
+                
+                // Reset image preview
+                imagePreview.style.display = 'none';
+                placeholderText.style.display = 'block';
+                
+                // Reset file input
+                fileInput.value = '';
+                
+                // Reset size slider
+                sizeSlider.value = 100;
+                currentSize = 100;
+                sizeValue.textContent = '100';
+                emojiPreview.style.width = '100px';
+                emojiPreview.style.height = '100px';
+                emojiPreview.style.fontSize = '50px';
+            });
+        });
+    </script>
+</body>
+</html>
