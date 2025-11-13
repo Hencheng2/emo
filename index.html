@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced Photo Editor with Custom Emoji</title>
+    <title>Photo Editor with Draggable Emoji</title>
     <style>
         * {
             margin: 0;
@@ -198,7 +198,7 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             transition: transform 0.2s;
             position: absolute;
-            touch-action: none;
+            z-index: 10;
         }
         
         .custom-emoji:hover {
@@ -215,7 +215,7 @@
             bottom: -6px;
             right: -6px;
             cursor: nwse-resize;
-            z-index: 10;
+            z-index: 20;
         }
         
         #imagePreview {
@@ -273,7 +273,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>Enhanced Photo Editor with Custom Emoji</h1>
+            <h1>Photo Editor with Draggable Emoji</h1>
             <p class="subtitle">Upload a photo and add customizable, draggable, and resizable round green checkmarks</p>
         </header>
         
@@ -338,7 +338,7 @@
         </div>
         
         <footer>
-            <p>Created with HTML, CSS, and JavaScript | Enhanced Photo Editor with Custom Emoji</p>
+            <p>Created with HTML, CSS, and JavaScript | Photo Editor with Draggable Emoji</p>
         </footer>
     </div>
 
@@ -360,9 +360,10 @@
             let currentSize = 100;
             let emojis = [];
             let currentImage = null;
-            let activeEmoji = null;
+            let isDragging = false;
             let isResizing = false;
-            let startX, startY, startWidth, startHeight, startLeft, startTop;
+            let activeEmoji = null;
+            let dragOffset = { x: 0, y: 0 };
             
             // Upload area click event
             uploadArea.addEventListener('click', () => {
@@ -445,14 +446,15 @@
                 emoji.style.position = 'absolute';
                 
                 // Center the emoji on the image
-                const imgRect = imagePreview.getBoundingClientRect();
                 const containerRect = previewArea.getBoundingClientRect();
+                const imgRect = imagePreview.getBoundingClientRect();
                 
-                const left = (imgRect.width / 2) - (width / 2);
-                const top = (imgRect.height / 2) - (height / 2);
+                // Calculate center position relative to the preview area
+                const centerX = (containerRect.width / 2) - (width / 2);
+                const centerY = (containerRect.height / 2) - (height / 2);
                 
-                emoji.style.left = `${left}px`;
-                emoji.style.top = `${top}px`;
+                emoji.style.left = `${centerX}px`;
+                emoji.style.top = `${centerY}px`;
                 
                 // Make the emoji draggable and resizable
                 makeDraggable(emoji);
@@ -466,53 +468,56 @@
             
             // Make an element draggable
             function makeDraggable(element) {
-                let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+                element.addEventListener('mousedown', startDrag);
                 
-                element.onmousedown = dragMouseDown;
-                
-                function dragMouseDown(e) {
+                function startDrag(e) {
                     if (e.target.classList.contains('resize-handle')) {
                         return;
                     }
                     
                     e.preventDefault();
-                    // Get the initial mouse cursor position
-                    pos3 = e.clientX;
-                    pos4 = e.clientY;
+                    isDragging = true;
+                    activeEmoji = element;
                     
-                    document.onmouseup = closeDragElement;
-                    document.onmousemove = elementDrag;
+                    // Calculate the offset between mouse position and emoji position
+                    const rect = element.getBoundingClientRect();
+                    dragOffset.x = e.clientX - rect.left;
+                    dragOffset.y = e.clientY - rect.top;
+                    
+                    // Add event listeners for dragging
+                    document.addEventListener('mousemove', drag);
+                    document.addEventListener('mouseup', stopDrag);
+                    
+                    // Bring to front
+                    element.style.zIndex = '100';
                 }
                 
-                function elementDrag(e) {
+                function drag(e) {
+                    if (!isDragging || activeEmoji !== element) return;
+                    
                     e.preventDefault();
-                    // Calculate the new cursor position
-                    pos1 = pos3 - e.clientX;
-                    pos2 = pos4 - e.clientY;
-                    pos3 = e.clientX;
-                    pos4 = e.clientY;
                     
-                    // Set the element's new position
-                    const newTop = element.offsetTop - pos2;
-                    const newLeft = element.offsetLeft - pos1;
-                    
-                    // Constrain to the preview area
+                    // Calculate new position
                     const containerRect = previewArea.getBoundingClientRect();
-                    const elementRect = element.getBoundingClientRect();
+                    const newX = e.clientX - containerRect.left - dragOffset.x;
+                    const newY = e.clientY - containerRect.top - dragOffset.y;
                     
-                    if (newTop >= 0 && newTop <= containerRect.height - elementRect.height) {
-                        element.style.top = newTop + "px";
-                    }
+                    // Apply constraints to keep emoji within the container
+                    const maxX = containerRect.width - element.offsetWidth;
+                    const maxY = containerRect.height - element.offsetHeight;
                     
-                    if (newLeft >= 0 && newLeft <= containerRect.width - elementRect.width) {
-                        element.style.left = newLeft + "px";
-                    }
+                    element.style.left = `${Math.max(0, Math.min(newX, maxX))}px`;
+                    element.style.top = `${Math.max(0, Math.min(newY, maxY))}px`;
                 }
                 
-                function closeDragElement() {
-                    // Stop moving when mouse button is released
-                    document.onmouseup = null;
-                    document.onmousemove = null;
+                function stopDrag() {
+                    isDragging = false;
+                    activeEmoji = null;
+                    element.style.zIndex = '10';
+                    
+                    // Remove event listeners
+                    document.removeEventListener('mousemove', drag);
+                    document.removeEventListener('mouseup', stopDrag);
                 }
             }
             
@@ -520,46 +525,46 @@
             function makeResizable(element) {
                 const resizeHandle = element.querySelector('.resize-handle');
                 
-                resizeHandle.addEventListener('mousedown', initResize);
+                resizeHandle.addEventListener('mousedown', startResize);
                 
-                function initResize(e) {
+                function startResize(e) {
                     e.preventDefault();
                     e.stopPropagation();
                     
-                    startX = e.clientX;
-                    startY = e.clientY;
-                    startWidth = parseInt(document.defaultView.getComputedStyle(element).width, 10);
-                    startHeight = parseInt(document.defaultView.getComputedStyle(element).height, 10);
-                    startLeft = parseInt(document.defaultView.getComputedStyle(element).left, 10);
-                    startTop = parseInt(document.defaultView.getComputedStyle(element).top, 10);
+                    isResizing = true;
+                    activeEmoji = element;
+                    
+                    const startWidth = parseInt(document.defaultView.getComputedStyle(element).width, 10);
+                    const startHeight = parseInt(document.defaultView.getComputedStyle(element).height, 10);
+                    const startX = e.clientX;
+                    const startY = e.clientY;
+                    
+                    function resize(e) {
+                        if (!isResizing) return;
+                        
+                        const width = startWidth + (e.clientX - startX);
+                        const height = startHeight + (e.clientY - startY);
+                        
+                        // Set minimum and maximum size
+                        const minSize = 10;
+                        const maxSize = 300;
+                        const newWidth = Math.max(minSize, Math.min(width, maxSize));
+                        const newHeight = Math.max(minSize, Math.min(height, maxSize));
+                        
+                        element.style.width = newWidth + 'px';
+                        element.style.height = newHeight + 'px';
+                        element.style.fontSize = (newWidth * 0.5) + 'px';
+                    }
+                    
+                    function stopResize() {
+                        isResizing = false;
+                        activeEmoji = null;
+                        document.removeEventListener('mousemove', resize);
+                        document.removeEventListener('mouseup', stopResize);
+                    }
                     
                     document.addEventListener('mousemove', resize);
                     document.addEventListener('mouseup', stopResize);
-                }
-                
-                function resize(e) {
-                    e.preventDefault();
-                    
-                    const width = startWidth + (e.clientX - startX);
-                    const height = startHeight + (e.clientY - startY);
-                    
-                    // Set minimum size
-                    const minSize = 10;
-                    const newWidth = Math.max(minSize, width);
-                    const newHeight = Math.max(minSize, height);
-                    
-                    element.style.width = newWidth + 'px';
-                    element.style.height = newHeight + 'px';
-                    element.style.fontSize = (newWidth * 0.5) + 'px';
-                    
-                    // Adjust position to resize from bottom-right
-                    element.style.left = startLeft + 'px';
-                    element.style.top = startTop + 'px';
-                }
-                
-                function stopResize() {
-                    document.removeEventListener('mousemove', resize);
-                    document.removeEventListener('mouseup', stopResize);
                 }
             }
             
@@ -574,46 +579,50 @@
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 
-                // Set canvas dimensions to match the image
-                canvas.width = imagePreview.naturalWidth;
-                canvas.height = imagePreview.naturalHeight;
-                
-                // Draw the base image
-                ctx.drawImage(imagePreview, 0, 0, canvas.width, canvas.height);
-                
-                // Calculate scale factors
-                const scaleX = canvas.width / imagePreview.offsetWidth;
-                const scaleY = canvas.height / imagePreview.offsetHeight;
-                
-                // Draw each emoji
-                emojis.forEach(emoji => {
-                    const emojiRect = emoji.getBoundingClientRect();
-                    const containerRect = previewArea.getBoundingClientRect();
+                // Wait for the image to load
+                currentImage.onload = function() {
+                    // Set canvas dimensions to match the image
+                    canvas.width = currentImage.naturalWidth;
+                    canvas.height = currentImage.naturalHeight;
                     
-                    // Calculate position relative to the image
-                    const x = (emojiRect.left - containerRect.left) * scaleX;
-                    const y = (emojiRect.top - containerRect.top) * scaleY;
-                    const size = emoji.offsetWidth * scaleX;
+                    // Draw the base image
+                    ctx.drawImage(currentImage, 0, 0, canvas.width, canvas.height);
                     
-                    // Draw the circle
-                    ctx.fillStyle = '#00D26A';
-                    ctx.beginPath();
-                    ctx.arc(x + size/2, y + size/2, size/2, 0, Math.PI * 2);
-                    ctx.fill();
+                    // Calculate scale factors
+                    const scaleX = canvas.width / imagePreview.offsetWidth;
+                    const scaleY = canvas.height / imagePreview.offsetHeight;
                     
-                    // Draw the checkmark
-                    ctx.fillStyle = 'white';
-                    ctx.font = `bold ${size * 0.5}px Arial`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText('✔', x + size/2, y + size/2);
-                });
+                    // Draw each emoji
+                    emojis.forEach(emoji => {
+                        const x = parseFloat(emoji.style.left) * scaleX;
+                        const y = parseFloat(emoji.style.top) * scaleY;
+                        const size = emoji.offsetWidth * scaleX;
+                        
+                        // Draw the circle
+                        ctx.fillStyle = '#00D26A';
+                        ctx.beginPath();
+                        ctx.arc(x + size/2, y + size/2, size/2, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Draw the checkmark
+                        ctx.fillStyle = 'white';
+                        ctx.font = `bold ${size * 0.5}px Arial`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('✔', x + size/2, y + size/2);
+                    });
+                    
+                    // Create download link
+                    const link = document.createElement('a');
+                    link.download = 'edited-photo.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                };
                 
-                // Create download link
-                const link = document.createElement('a');
-                link.download = 'edited-photo.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
+                // Trigger the onload if the image is already loaded
+                if (currentImage.complete) {
+                    currentImage.onload();
+                }
             });
             
             // Reset button event
