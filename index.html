@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photo Editor with Draggable Emoji</title>
+    <title>Photo Editor - Drag & Drop Emojis</title>
     <style>
         * {
             margin: 0;
@@ -177,12 +177,37 @@
             cursor: pointer;
         }
         
-        .emoji-preview {
+        .emoji-palette {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+        
+        .emoji-item {
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 20px 0;
-            height: 150px;
+            background-color: #00D26A;
+            border-radius: 50%;
+            color: white;
+            font-weight: bold;
+            user-select: none;
+            cursor: grab;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s;
+            width: 80px;
+            height: 80px;
+            font-size: 40px;
+        }
+        
+        .emoji-item:hover {
+            transform: scale(1.1);
+        }
+        
+        .emoji-item:active {
+            cursor: grabbing;
         }
         
         .custom-emoji {
@@ -273,8 +298,8 @@
 <body>
     <div class="container">
         <header>
-            <h1>Photo Editor with Draggable Emoji</h1>
-            <p class="subtitle">Upload a photo and add customizable, draggable, and resizable round green checkmarks</p>
+            <h1>Photo Editor - Drag & Drop Emojis</h1>
+            <p class="subtitle">Upload a photo and drag emojis directly onto it</p>
         </header>
         
         <div class="app-container">
@@ -289,21 +314,23 @@
                 </div>
                 
                 <div class="control-group">
-                    <h2>Customize Emoji</h2>
+                    <h2>Emoji Palette</h2>
+                    <p>Drag these emojis onto your photo:</p>
                     
-                    <div class="emoji-preview">
-                        <div class="custom-emoji" id="emojiPreview" style="width: 100px; height: 100px; font-size: 50px;">
-                            ✔
-                        </div>
+                    <div class="emoji-palette">
+                        <div class="emoji-item" draggable="true" data-size="80">✔</div>
+                        <div class="emoji-item" draggable="true" data-size="60">✔</div>
+                        <div class="emoji-item" draggable="true" data-size="40">✔</div>
+                        <div class="emoji-item" draggable="true" data-size="30">✔</div>
                     </div>
                     
                     <div class="slider-container">
-                        <label for="sizeSlider">Default Emoji Size: <span id="sizeValue">100</span>px</label>
-                        <input type="range" id="sizeSlider" min="1" max="200" value="100">
+                        <label for="sizeSlider">Custom Size: <span id="sizeValue">80</span>px</label>
+                        <input type="range" id="sizeSlider" min="1" max="200" value="80">
                     </div>
                     
-                    <button class="btn" id="addEmojiBtn">
-                        <span>➕</span> Add Emoji to Photo
+                    <button class="btn" id="addCustomEmojiBtn">
+                        <span>➕</span> Add Custom Size Emoji
                     </button>
                 </div>
                 
@@ -321,11 +348,11 @@
                     <h3>How to Use:</h3>
                     <ol>
                         <li>Upload a photo by clicking the upload area</li>
-                        <li>Adjust the default emoji size using the slider</li>
-                        <li>Click "Add Emoji to Photo" to place an emoji</li>
-                        <li>Drag the emoji to your desired location</li>
+                        <li>Drag emojis from the palette directly onto your photo</li>
+                        <li>Adjust the custom size slider if needed</li>
+                        <li>Click "Add Custom Size Emoji" for a specific size</li>
+                        <li>Reposition emojis by dragging them on the photo</li>
                         <li>Resize emojis using the handle in the bottom-right corner</li>
-                        <li>Add multiple emojis if needed</li>
                         <li>Download your final image when done</li>
                     </ol>
                 </div>
@@ -338,7 +365,7 @@
         </div>
         
         <footer>
-            <p>Created with HTML, CSS, and JavaScript | Photo Editor with Draggable Emoji</p>
+            <p>Created with HTML, CSS, and JavaScript | Photo Editor with Drag & Drop Emojis</p>
         </footer>
     </div>
 
@@ -352,12 +379,12 @@
             const placeholderText = document.getElementById('placeholderText');
             const sizeSlider = document.getElementById('sizeSlider');
             const sizeValue = document.getElementById('sizeValue');
-            const emojiPreview = document.getElementById('emojiPreview');
-            const addEmojiBtn = document.getElementById('addEmojiBtn');
+            const addCustomEmojiBtn = document.getElementById('addCustomEmojiBtn');
             const downloadBtn = document.getElementById('downloadBtn');
             const resetBtn = document.getElementById('resetBtn');
+            const emojiItems = document.querySelectorAll('.emoji-item');
             
-            let currentSize = 100;
+            let currentSize = 80;
             let emojis = [];
             let currentImage = null;
             let isDragging = false;
@@ -389,7 +416,7 @@
                 }
             });
             
-            // Drag and drop functionality
+            // Drag and drop functionality for photo upload
             uploadArea.addEventListener('dragover', function(e) {
                 e.preventDefault();
                 uploadArea.style.background = 'rgba(255, 255, 255, 0.2)';
@@ -418,25 +445,55 @@
             sizeSlider.addEventListener('input', function() {
                 currentSize = this.value;
                 sizeValue.textContent = currentSize;
-                
-                // Update preview emoji size
-                emojiPreview.style.width = `${currentSize}px`;
-                emojiPreview.style.height = `${currentSize}px`;
-                emojiPreview.style.fontSize = `${currentSize * 0.5}px`;
             });
             
-            // Add emoji button event
-            addEmojiBtn.addEventListener('click', function() {
+            // Add custom emoji button event
+            addCustomEmojiBtn.addEventListener('click', function() {
                 if (!imagePreview.style.display || imagePreview.style.display === 'none') {
                     alert('Please upload an image first!');
                     return;
                 }
                 
-                createEmoji(currentSize, currentSize);
+                createEmoji(currentSize, currentSize, 100, 100);
+            });
+            
+            // Make emoji items draggable
+            emojiItems.forEach(item => {
+                item.addEventListener('dragstart', function(e) {
+                    if (!imagePreview.style.display || imagePreview.style.display === 'none') {
+                        e.preventDefault();
+                        alert('Please upload an image first!');
+                        return;
+                    }
+                    
+                    const size = parseInt(this.getAttribute('data-size'));
+                    e.dataTransfer.setData('text/plain', size.toString());
+                });
+            });
+            
+            // Allow drop on preview area
+            previewArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+            });
+            
+            // Handle drop on preview area
+            previewArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                
+                if (!imagePreview.style.display || imagePreview.style.display === 'none') {
+                    return;
+                }
+                
+                const size = parseInt(e.dataTransfer.getData('text/plain'));
+                const rect = previewArea.getBoundingClientRect();
+                const x = e.clientX - rect.left - (size / 2);
+                const y = e.clientY - rect.top - (size / 2);
+                
+                createEmoji(size, size, x, y);
             });
             
             // Create a new emoji with drag and resize capabilities
-            function createEmoji(width, height) {
+            function createEmoji(width, height, x, y) {
                 const emoji = document.createElement('div');
                 emoji.className = 'custom-emoji';
                 emoji.innerHTML = '✔<div class="resize-handle"></div>';
@@ -444,17 +501,8 @@
                 emoji.style.height = `${height}px`;
                 emoji.style.fontSize = `${width * 0.5}px`;
                 emoji.style.position = 'absolute';
-                
-                // Center the emoji on the image
-                const containerRect = previewArea.getBoundingClientRect();
-                const imgRect = imagePreview.getBoundingClientRect();
-                
-                // Calculate center position relative to the preview area
-                const centerX = (containerRect.width / 2) - (width / 2);
-                const centerY = (containerRect.height / 2) - (height / 2);
-                
-                emoji.style.left = `${centerX}px`;
-                emoji.style.top = `${centerY}px`;
+                emoji.style.left = `${x}px`;
+                emoji.style.top = `${y}px`;
                 
                 // Make the emoji draggable and resizable
                 makeDraggable(emoji);
@@ -642,12 +690,9 @@
                 fileInput.value = '';
                 
                 // Reset size slider
-                sizeSlider.value = 100;
-                currentSize = 100;
-                sizeValue.textContent = '100';
-                emojiPreview.style.width = '100px';
-                emojiPreview.style.height = '100px';
-                emojiPreview.style.fontSize = '50px';
+                sizeSlider.value = 80;
+                currentSize = 80;
+                sizeValue.textContent = '80';
             });
         });
     </script>
