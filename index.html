@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photo Editor with Custom Emoji</title>
+    <title>Enhanced Photo Editor with Custom Emoji</title>
     <style>
         * {
             margin: 0;
@@ -197,10 +197,25 @@
             cursor: move;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             transition: transform 0.2s;
+            position: absolute;
+            touch-action: none;
         }
         
         .custom-emoji:hover {
             transform: scale(1.05);
+        }
+        
+        .resize-handle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border: 2px solid #00D26A;
+            border-radius: 50%;
+            bottom: -6px;
+            right: -6px;
+            cursor: nwse-resize;
+            z-index: 10;
         }
         
         #imagePreview {
@@ -258,8 +273,8 @@
 <body>
     <div class="container">
         <header>
-            <h1>Photo Editor with Custom Emoji</h1>
-            <p class="subtitle">Upload a photo and add customizable round green checkmarks</p>
+            <h1>Enhanced Photo Editor with Custom Emoji</h1>
+            <p class="subtitle">Upload a photo and add customizable, draggable, and resizable round green checkmarks</p>
         </header>
         
         <div class="app-container">
@@ -283,8 +298,8 @@
                     </div>
                     
                     <div class="slider-container">
-                        <label for="sizeSlider">Emoji Size: <span id="sizeValue">100</span>px</label>
-                        <input type="range" id="sizeSlider" min="30" max="200" value="100">
+                        <label for="sizeSlider">Default Emoji Size: <span id="sizeValue">100</span>px</label>
+                        <input type="range" id="sizeSlider" min="1" max="200" value="100">
                     </div>
                     
                     <button class="btn" id="addEmojiBtn">
@@ -306,9 +321,10 @@
                     <h3>How to Use:</h3>
                     <ol>
                         <li>Upload a photo by clicking the upload area</li>
-                        <li>Adjust the emoji size using the slider</li>
+                        <li>Adjust the default emoji size using the slider</li>
                         <li>Click "Add Emoji to Photo" to place an emoji</li>
                         <li>Drag the emoji to your desired location</li>
+                        <li>Resize emojis using the handle in the bottom-right corner</li>
                         <li>Add multiple emojis if needed</li>
                         <li>Download your final image when done</li>
                     </ol>
@@ -322,7 +338,7 @@
         </div>
         
         <footer>
-            <p>Created with HTML, CSS, and JavaScript | Photo Editor with Custom Emoji</p>
+            <p>Created with HTML, CSS, and JavaScript | Enhanced Photo Editor with Custom Emoji</p>
         </footer>
     </div>
 
@@ -344,6 +360,9 @@
             let currentSize = 100;
             let emojis = [];
             let currentImage = null;
+            let activeEmoji = null;
+            let isResizing = false;
+            let startX, startY, startWidth, startHeight, startLeft, startTop;
             
             // Upload area click event
             uploadArea.addEventListener('click', () => {
@@ -412,30 +431,38 @@
                     return;
                 }
                 
+                createEmoji(currentSize, currentSize);
+            });
+            
+            // Create a new emoji with drag and resize capabilities
+            function createEmoji(width, height) {
                 const emoji = document.createElement('div');
                 emoji.className = 'custom-emoji';
-                emoji.innerHTML = '✔';
-                emoji.style.width = `${currentSize}px`;
-                emoji.style.height = `${currentSize}px`;
-                emoji.style.fontSize = `${currentSize * 0.5}px`;
+                emoji.innerHTML = '✔<div class="resize-handle"></div>';
+                emoji.style.width = `${width}px`;
+                emoji.style.height = `${height}px`;
+                emoji.style.fontSize = `${width * 0.5}px`;
                 emoji.style.position = 'absolute';
                 
                 // Center the emoji on the image
                 const imgRect = imagePreview.getBoundingClientRect();
                 const containerRect = previewArea.getBoundingClientRect();
                 
-                const left = (imgRect.width / 2) - (currentSize / 2);
-                const top = (imgRect.height / 2) - (currentSize / 2);
+                const left = (imgRect.width / 2) - (width / 2);
+                const top = (imgRect.height / 2) - (height / 2);
                 
                 emoji.style.left = `${left}px`;
                 emoji.style.top = `${top}px`;
                 
-                // Make the emoji draggable
+                // Make the emoji draggable and resizable
                 makeDraggable(emoji);
+                makeResizable(emoji);
                 
                 previewArea.appendChild(emoji);
                 emojis.push(emoji);
-            });
+                
+                return emoji;
+            }
             
             // Make an element draggable
             function makeDraggable(element) {
@@ -444,6 +471,10 @@
                 element.onmousedown = dragMouseDown;
                 
                 function dragMouseDown(e) {
+                    if (e.target.classList.contains('resize-handle')) {
+                        return;
+                    }
+                    
                     e.preventDefault();
                     // Get the initial mouse cursor position
                     pos3 = e.clientX;
@@ -482,6 +513,53 @@
                     // Stop moving when mouse button is released
                     document.onmouseup = null;
                     document.onmousemove = null;
+                }
+            }
+            
+            // Make an element resizable
+            function makeResizable(element) {
+                const resizeHandle = element.querySelector('.resize-handle');
+                
+                resizeHandle.addEventListener('mousedown', initResize);
+                
+                function initResize(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    startWidth = parseInt(document.defaultView.getComputedStyle(element).width, 10);
+                    startHeight = parseInt(document.defaultView.getComputedStyle(element).height, 10);
+                    startLeft = parseInt(document.defaultView.getComputedStyle(element).left, 10);
+                    startTop = parseInt(document.defaultView.getComputedStyle(element).top, 10);
+                    
+                    document.addEventListener('mousemove', resize);
+                    document.addEventListener('mouseup', stopResize);
+                }
+                
+                function resize(e) {
+                    e.preventDefault();
+                    
+                    const width = startWidth + (e.clientX - startX);
+                    const height = startHeight + (e.clientY - startY);
+                    
+                    // Set minimum size
+                    const minSize = 10;
+                    const newWidth = Math.max(minSize, width);
+                    const newHeight = Math.max(minSize, height);
+                    
+                    element.style.width = newWidth + 'px';
+                    element.style.height = newHeight + 'px';
+                    element.style.fontSize = (newWidth * 0.5) + 'px';
+                    
+                    // Adjust position to resize from bottom-right
+                    element.style.left = startLeft + 'px';
+                    element.style.top = startTop + 'px';
+                }
+                
+                function stopResize() {
+                    document.removeEventListener('mousemove', resize);
+                    document.removeEventListener('mouseup', stopResize);
                 }
             }
             
