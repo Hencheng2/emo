@@ -14,7 +14,7 @@
         
         body {
             background: linear-gradient(135deg, #0a1f17 0%, #152a25 100%);
-            color: #ffffff;
+            color: white;
             min-height: 100vh;
             padding: 20px;
             overflow-x: hidden;
@@ -235,13 +235,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: transparent;
+            background-color: #00D26A;
             border-radius: 50%;
-            color: inherit;
+            color: white;
             font-weight: bold;
             user-select: none;
             cursor: grab;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             transition: transform 0.2s;
             position: absolute;
             z-index: 10;
@@ -258,7 +258,7 @@
             max-height: 500px;
             display: none;
             border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
         
         .placeholder-text {
@@ -328,7 +328,7 @@
         
         <header>
             <h1>Photo Editor with Draggable Emoji</h1>
-            <p class="subtitle">Upload a photo and add customizable, draggable emojis</p>
+            <p class="subtitle">Upload a photo and add customizable, draggable round green checkmarks</p>
         </header>
         
         <div class="app-container">
@@ -507,8 +507,6 @@
                 emoji.style.height = `${height}px`;
                 emoji.style.fontSize = `${width * 0.5}px`;
                 emoji.style.position = 'absolute';
-                emoji.style.color = 'inherit'; // Keep original emoji color
-                emoji.style.backgroundColor = 'transparent'; // Remove background to keep original emoji appearance
                 
                 // Center the emoji on the image
                 const containerRect = previewArea.getBoundingClientRect();
@@ -676,7 +674,14 @@
                         const y = emojiY * scaleY;
                         const size = emojiSize * scaleX;
                         
-                        // Draw the emoji text (keeping original color)
+                        // Draw the circle
+                        ctx.fillStyle = '#00D26A';
+                        ctx.beginPath();
+                        ctx.arc(x + size/2, y + size/2, size/2, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Draw the checkmark
+                        ctx.fillStyle = 'white';
                         ctx.font = `bold ${size * 0.5}px Arial`;
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
