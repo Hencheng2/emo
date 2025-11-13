@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photo Editor - Drag & Drop Emojis</title>
+    <title>Photo Editor with Draggable Emoji</title>
     <style>
         * {
             margin: 0;
@@ -17,6 +17,7 @@
             color: white;
             min-height: 100vh;
             padding: 20px;
+            overflow-x: hidden;
         }
         
         .container {
@@ -76,6 +77,10 @@
             overflow: hidden;
             min-height: 500px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
         }
         
         .control-group {
@@ -177,37 +182,12 @@
             cursor: pointer;
         }
         
-        .emoji-palette {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin: 20px 0;
-            justify-content: center;
-        }
-        
-        .emoji-item {
+        .emoji-preview {
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: #00D26A;
-            border-radius: 50%;
-            color: white;
-            font-weight: bold;
-            user-select: none;
-            cursor: grab;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            transition: transform 0.2s;
-            width: 80px;
-            height: 80px;
-            font-size: 40px;
-        }
-        
-        .emoji-item:hover {
-            transform: scale(1.1);
-        }
-        
-        .emoji-item:active {
-            cursor: grabbing;
+            margin: 20px 0;
+            height: 150px;
         }
         
         .custom-emoji {
@@ -219,15 +199,17 @@
             color: white;
             font-weight: bold;
             user-select: none;
-            cursor: move;
+            cursor: grab;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             transition: transform 0.2s;
             position: absolute;
             z-index: 10;
+            touch-action: none;
         }
         
-        .custom-emoji:hover {
-            transform: scale(1.05);
+        .custom-emoji:active {
+            cursor: grabbing;
+            transform: scale(1.1);
         }
         
         .resize-handle {
@@ -249,6 +231,7 @@
             display: none;
             border-radius: 10px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
         }
         
         .placeholder-text {
@@ -298,8 +281,8 @@
 <body>
     <div class="container">
         <header>
-            <h1>Photo Editor - Drag & Drop Emojis</h1>
-            <p class="subtitle">Upload a photo and drag emojis directly onto it</p>
+            <h1>Photo Editor with Draggable Emoji</h1>
+            <p class="subtitle">Upload a photo and add customizable, draggable, and resizable round green checkmarks</p>
         </header>
         
         <div class="app-container">
@@ -314,23 +297,21 @@
                 </div>
                 
                 <div class="control-group">
-                    <h2>Emoji Palette</h2>
-                    <p>Drag these emojis onto your photo:</p>
+                    <h2>Customize Emoji</h2>
                     
-                    <div class="emoji-palette">
-                        <div class="emoji-item" draggable="true" data-size="80">✔</div>
-                        <div class="emoji-item" draggable="true" data-size="60">✔</div>
-                        <div class="emoji-item" draggable="true" data-size="40">✔</div>
-                        <div class="emoji-item" draggable="true" data-size="30">✔</div>
+                    <div class="emoji-preview">
+                        <div class="custom-emoji" id="emojiPreview" style="width: 100px; height: 100px; font-size: 50px;">
+                            ✔
+                        </div>
                     </div>
                     
                     <div class="slider-container">
-                        <label for="sizeSlider">Custom Size: <span id="sizeValue">80</span>px</label>
-                        <input type="range" id="sizeSlider" min="1" max="200" value="80">
+                        <label for="sizeSlider">Default Emoji Size: <span id="sizeValue">100</span>px</label>
+                        <input type="range" id="sizeSlider" min="10" max="200" value="100">
                     </div>
                     
-                    <button class="btn" id="addCustomEmojiBtn">
-                        <span>➕</span> Add Custom Size Emoji
+                    <button class="btn" id="addEmojiBtn">
+                        <span>➕</span> Add Emoji to Photo
                     </button>
                 </div>
                 
@@ -348,11 +329,11 @@
                     <h3>How to Use:</h3>
                     <ol>
                         <li>Upload a photo by clicking the upload area</li>
-                        <li>Drag emojis from the palette directly onto your photo</li>
-                        <li>Adjust the custom size slider if needed</li>
-                        <li>Click "Add Custom Size Emoji" for a specific size</li>
-                        <li>Reposition emojis by dragging them on the photo</li>
+                        <li>Adjust the default emoji size using the slider</li>
+                        <li>Click "Add Emoji to Photo" to place an emoji</li>
+                        <li>Drag the emoji to your desired location</li>
                         <li>Resize emojis using the handle in the bottom-right corner</li>
+                        <li>Add multiple emojis if needed</li>
                         <li>Download your final image when done</li>
                     </ol>
                 </div>
@@ -365,7 +346,7 @@
         </div>
         
         <footer>
-            <p>Created with HTML, CSS, and JavaScript | Photo Editor with Drag & Drop Emojis</p>
+            <p>Created with HTML, CSS, and JavaScript | Photo Editor with Draggable Emoji</p>
         </footer>
     </div>
 
@@ -379,12 +360,12 @@
             const placeholderText = document.getElementById('placeholderText');
             const sizeSlider = document.getElementById('sizeSlider');
             const sizeValue = document.getElementById('sizeValue');
-            const addCustomEmojiBtn = document.getElementById('addCustomEmojiBtn');
+            const emojiPreview = document.getElementById('emojiPreview');
+            const addEmojiBtn = document.getElementById('addEmojiBtn');
             const downloadBtn = document.getElementById('downloadBtn');
             const resetBtn = document.getElementById('resetBtn');
-            const emojiItems = document.querySelectorAll('.emoji-item');
             
-            let currentSize = 80;
+            let currentSize = 100;
             let emojis = [];
             let currentImage = null;
             let isDragging = false;
@@ -416,7 +397,7 @@
                 }
             });
             
-            // Drag and drop functionality for photo upload
+            // Drag and drop functionality
             uploadArea.addEventListener('dragover', function(e) {
                 e.preventDefault();
                 uploadArea.style.background = 'rgba(255, 255, 255, 0.2)';
@@ -445,55 +426,25 @@
             sizeSlider.addEventListener('input', function() {
                 currentSize = this.value;
                 sizeValue.textContent = currentSize;
+                
+                // Update preview emoji size
+                emojiPreview.style.width = `${currentSize}px`;
+                emojiPreview.style.height = `${currentSize}px`;
+                emojiPreview.style.fontSize = `${currentSize * 0.5}px`;
             });
             
-            // Add custom emoji button event
-            addCustomEmojiBtn.addEventListener('click', function() {
+            // Add emoji button event
+            addEmojiBtn.addEventListener('click', function() {
                 if (!imagePreview.style.display || imagePreview.style.display === 'none') {
                     alert('Please upload an image first!');
                     return;
                 }
                 
-                createEmoji(currentSize, currentSize, 100, 100);
-            });
-            
-            // Make emoji items draggable
-            emojiItems.forEach(item => {
-                item.addEventListener('dragstart', function(e) {
-                    if (!imagePreview.style.display || imagePreview.style.display === 'none') {
-                        e.preventDefault();
-                        alert('Please upload an image first!');
-                        return;
-                    }
-                    
-                    const size = parseInt(this.getAttribute('data-size'));
-                    e.dataTransfer.setData('text/plain', size.toString());
-                });
-            });
-            
-            // Allow drop on preview area
-            previewArea.addEventListener('dragover', function(e) {
-                e.preventDefault();
-            });
-            
-            // Handle drop on preview area
-            previewArea.addEventListener('drop', function(e) {
-                e.preventDefault();
-                
-                if (!imagePreview.style.display || imagePreview.style.display === 'none') {
-                    return;
-                }
-                
-                const size = parseInt(e.dataTransfer.getData('text/plain'));
-                const rect = previewArea.getBoundingClientRect();
-                const x = e.clientX - rect.left - (size / 2);
-                const y = e.clientY - rect.top - (size / 2);
-                
-                createEmoji(size, size, x, y);
+                createEmoji(currentSize, currentSize);
             });
             
             // Create a new emoji with drag and resize capabilities
-            function createEmoji(width, height, x, y) {
+            function createEmoji(width, height) {
                 const emoji = document.createElement('div');
                 emoji.className = 'custom-emoji';
                 emoji.innerHTML = '✔<div class="resize-handle"></div>';
@@ -501,8 +452,14 @@
                 emoji.style.height = `${height}px`;
                 emoji.style.fontSize = `${width * 0.5}px`;
                 emoji.style.position = 'absolute';
-                emoji.style.left = `${x}px`;
-                emoji.style.top = `${y}px`;
+                
+                // Center the emoji on the image
+                const containerRect = previewArea.getBoundingClientRect();
+                const centerX = (containerRect.width / 2) - (width / 2);
+                const centerY = (containerRect.height / 2) - (height / 2);
+                
+                emoji.style.left = `${centerX}px`;
+                emoji.style.top = `${centerY}px`;
                 
                 // Make the emoji draggable and resizable
                 makeDraggable(emoji);
@@ -517,6 +474,7 @@
             // Make an element draggable
             function makeDraggable(element) {
                 element.addEventListener('mousedown', startDrag);
+                element.addEventListener('touchstart', startDragTouch, { passive: false });
                 
                 function startDrag(e) {
                     if (e.target.classList.contains('resize-handle')) {
@@ -524,6 +482,8 @@
                     }
                     
                     e.preventDefault();
+                    e.stopPropagation();
+                    
                     isDragging = true;
                     activeEmoji = element;
                     
@@ -536,6 +496,31 @@
                     document.addEventListener('mousemove', drag);
                     document.addEventListener('mouseup', stopDrag);
                     
+                    // Bring to front and change cursor
+                    element.style.zIndex = '100';
+                    element.style.cursor = 'grabbing';
+                }
+                
+                function startDragTouch(e) {
+                    if (e.target.classList.contains('resize-handle')) {
+                        return;
+                    }
+                    
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    isDragging = true;
+                    activeEmoji = element;
+                    
+                    const touch = e.touches[0];
+                    const rect = element.getBoundingClientRect();
+                    dragOffset.x = touch.clientX - rect.left;
+                    dragOffset.y = touch.clientY - rect.top;
+                    
+                    // Add event listeners for touch dragging
+                    document.addEventListener('touchmove', dragTouch, { passive: false });
+                    document.addEventListener('touchend', stopDragTouch);
+                    
                     // Bring to front
                     element.style.zIndex = '100';
                 }
@@ -544,6 +529,7 @@
                     if (!isDragging || activeEmoji !== element) return;
                     
                     e.preventDefault();
+                    e.stopPropagation();
                     
                     // Calculate new position
                     const containerRect = previewArea.getBoundingClientRect();
@@ -558,14 +544,44 @@
                     element.style.top = `${Math.max(0, Math.min(newY, maxY))}px`;
                 }
                 
+                function dragTouch(e) {
+                    if (!isDragging || activeEmoji !== element) return;
+                    
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const touch = e.touches[0];
+                    const containerRect = previewArea.getBoundingClientRect();
+                    const newX = touch.clientX - containerRect.left - dragOffset.x;
+                    const newY = touch.clientY - containerRect.top - dragOffset.y;
+                    
+                    // Apply constraints to keep emoji within the container
+                    const maxX = containerRect.width - element.offsetWidth;
+                    const maxY = containerRect.height - element.offsetHeight;
+                    
+                    element.style.left = `${Math.max(0, Math.min(newX, maxX))}px`;
+                    element.style.top = `${Math.max(0, Math.min(newY, maxY))}px`;
+                }
+                
                 function stopDrag() {
+                    isDragging = false;
+                    activeEmoji = null;
+                    element.style.zIndex = '10';
+                    element.style.cursor = 'grab';
+                    
+                    // Remove event listeners
+                    document.removeEventListener('mousemove', drag);
+                    document.removeEventListener('mouseup', stopDrag);
+                }
+                
+                function stopDragTouch() {
                     isDragging = false;
                     activeEmoji = null;
                     element.style.zIndex = '10';
                     
                     // Remove event listeners
-                    document.removeEventListener('mousemove', drag);
-                    document.removeEventListener('mouseup', stopDrag);
+                    document.removeEventListener('touchmove', dragTouch);
+                    document.removeEventListener('touchend', stopDragTouch);
                 }
             }
             
@@ -574,6 +590,7 @@
                 const resizeHandle = element.querySelector('.resize-handle');
                 
                 resizeHandle.addEventListener('mousedown', startResize);
+                resizeHandle.addEventListener('touchstart', startResizeTouch, { passive: false });
                 
                 function startResize(e) {
                     e.preventDefault();
@@ -589,6 +606,9 @@
                     
                     function resize(e) {
                         if (!isResizing) return;
+                        
+                        e.preventDefault();
+                        e.stopPropagation();
                         
                         const width = startWidth + (e.clientX - startX);
                         const height = startHeight + (e.clientY - startY);
@@ -613,6 +633,51 @@
                     
                     document.addEventListener('mousemove', resize);
                     document.addEventListener('mouseup', stopResize);
+                }
+                
+                function startResizeTouch(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    isResizing = true;
+                    activeEmoji = element;
+                    
+                    const touch = e.touches[0];
+                    const startWidth = parseInt(document.defaultView.getComputedStyle(element).width, 10);
+                    const startHeight = parseInt(document.defaultView.getComputedStyle(element).height, 10);
+                    const startX = touch.clientX;
+                    const startY = touch.clientY;
+                    
+                    function resizeTouch(e) {
+                        if (!isResizing) return;
+                        
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        const touch = e.touches[0];
+                        const width = startWidth + (touch.clientX - startX);
+                        const height = startHeight + (touch.clientY - startY);
+                        
+                        // Set minimum and maximum size
+                        const minSize = 10;
+                        const maxSize = 300;
+                        const newWidth = Math.max(minSize, Math.min(width, maxSize));
+                        const newHeight = Math.max(minSize, Math.min(height, maxSize));
+                        
+                        element.style.width = newWidth + 'px';
+                        element.style.height = newHeight + 'px';
+                        element.style.fontSize = (newWidth * 0.5) + 'px';
+                    }
+                    
+                    function stopResizeTouch() {
+                        isResizing = false;
+                        activeEmoji = null;
+                        document.removeEventListener('touchmove', resizeTouch);
+                        document.removeEventListener('touchend', stopResizeTouch);
+                    }
+                    
+                    document.addEventListener('touchmove', resizeTouch, { passive: false });
+                    document.addEventListener('touchend', stopResizeTouch);
                 }
             }
             
@@ -690,9 +755,12 @@
                 fileInput.value = '';
                 
                 // Reset size slider
-                sizeSlider.value = 80;
-                currentSize = 80;
-                sizeValue.textContent = '80';
+                sizeSlider.value = 100;
+                currentSize = 100;
+                sizeValue.textContent = '100';
+                emojiPreview.style.width = '100px';
+                emojiPreview.style.height = '100px';
+                emojiPreview.style.fontSize = '50px';
             });
         });
     </script>
